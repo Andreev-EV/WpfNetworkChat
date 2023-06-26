@@ -48,33 +48,44 @@ namespace WpfNetworkChat
                 AddMessage("Not connected to server.");
             }
         }
+      
 
         private async void btnConnDisconn_Click(object sender, RoutedEventArgs e)
         {
             if (client == null || !client.Connected)
             {
-                try
+                if(tbUserName.Text != "" && tbUserName.Text != "Имя пользователя")
                 {
-                    client?.Connect(host, port); //подключение клиента
-                    Reader = new StreamReader(client.GetStream());
-                    Writer = new StreamWriter(client.GetStream());
-                    if (Writer is null || Reader is null) return;
-                    // запускаем новый поток для получения данных
-                    Task.Run(() => ReceiveMessageAsync(Reader));
-                    AddMessage("Вы присоеденились к чату");
-                    Writer.WriteLine(tbUserName.Text);
-                    Writer.Flush();
+                    try
+                    {
+                        client?.Connect(host, port); //подключение клиента
+                        Reader = new StreamReader(client.GetStream());
+                        Writer = new StreamWriter(client.GetStream());
+                        if (Writer is null || Reader is null) return;
+                        // запускаем новый поток для получения данных
+                        Task.Run(() => ReceiveMessageAsync(Reader));
+                        AddMessage("Вы присоеденились к чату");
+                        Writer.WriteLine(tbUserName.Text);
+                        Writer.Flush();
+                        MainWin.Title = $"Чат TcpClient : {tbUserName.Text}";
+                    }
+                    catch (Exception ex)
+                    {
+                        AddMessage($"Error: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    AddMessage($"Error: {ex.Message}");
+                    MessageBox.Show("Укажите имя пользователя!");
+                    tbUserName.Text = "Имя пользователя";
                 }
+                
             }
-            else
-            {
-                Disconnect();
-            }
-
+            //else
+            //{
+            //    Disconnect();
+            //}
+           
         }
 
         private void Disconnect()
@@ -114,7 +125,14 @@ namespace WpfNetworkChat
 
         private void Window_Closed(object sender, EventArgs e)
         {
-           Disconnect();
+            Disconnect();
+            Writer.WriteLine(tbUserName.Text);
+            Writer.Flush();
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Disconnect();
         }
     }
 }
